@@ -78,7 +78,7 @@ impl<'a> selection::Dimensions for &'a Term {
     fn dimensions(&self) -> Point {
         Point {
             col: self.grid.num_cols(),
-            line: self.grid.num_lines()
+            line: self.grid.num_lines(),
         }
     }
 }
@@ -138,7 +138,7 @@ impl<'a> RenderableCellsIter<'a> {
         let (text_color, cursor_color) = if self.config.custom_cursor_colors() {
             (
                 Color::Named(NamedColor::CursorText),
-                Color::Named(NamedColor::Cursor)
+                Color::Named(NamedColor::Cursor),
             )
         } else {
             // Swap fg, bg
@@ -247,10 +247,10 @@ impl<'a> RenderableCellsIter<'a> {
             match cursor_style {
                 CursorStyle::Block => {
                     self.populate_block_cursor();
-                },
+                }
                 CursorStyle::Beam => {
                     self.populate_beam_cursor();
-                },
+                }
                 CursorStyle::Underline => {
                     self.populate_underline_cursor();
                 }
@@ -272,25 +272,28 @@ impl<'a> RenderableCellsIter<'a> {
         match *fg {
             Color::Spec(rgb) => rgb,
             Color::Named(ansi) => {
-                match (self.config.draw_bold_text_with_bright_colors(), cell.flags & DIM_BOLD) {
+                match (
+                    self.config.draw_bold_text_with_bright_colors(),
+                    cell.flags & DIM_BOLD,
+                ) {
                     // Draw bold text in bright colors *and* contains bold flag.
                     (true, self::cell::DIM_BOLD) |
-                    (true, self::cell::BOLD)     => self.colors[ansi.to_bright()],
+                    (true, self::cell::BOLD) => self.colors[ansi.to_bright()],
                     // Cell is marked as dim and not bold
-                    (_,    self::cell::DIM)      => self.colors[ansi.to_dim()],
+                    (_, self::cell::DIM) => self.colors[ansi.to_dim()],
                     // None of the above, keep original color.
-                    _ => self.colors[ansi]
+                    _ => self.colors[ansi],
                 }
-            },
+            }
             Color::Indexed(idx) => {
                 let idx = match (
                     self.config.draw_bold_text_with_bright_colors(),
                     cell.flags & DIM_BOLD,
-                    idx
+                    idx,
                 ) {
-                    (true,  self::cell::BOLD, 0...7)  => idx as usize + 8,
-                    (false, self::cell::DIM,  8...15) => idx as usize - 8,
-                    (false, self::cell::DIM,  0...7)  => idx as usize + 260,
+                    (true, self::cell::BOLD, 0...7) => idx as usize + 8,
+                    (false, self::cell::DIM, 8...15) => idx as usize - 8,
+                    (false, self::cell::DIM, 0...7) => idx as usize + 260,
                     _ => idx as usize,
                 };
 
@@ -303,7 +306,7 @@ impl<'a> RenderableCellsIter<'a> {
     fn compute_bg_alpha(&self, bg: &Color) -> f32 {
         match *bg {
             Color::Named(NamedColor::Background) => 0.0,
-            _ => 1.0
+            _ => 1.0,
         }
     }
 
@@ -360,7 +363,8 @@ impl<'a> Iterator for RenderableCellsIter<'a> {
                     // Normal cell
                     self.column += 1;
 
-                    let selected = self.selection.as_ref()
+                    let selected = self.selection
+                        .as_ref()
                         .map(|range| range.contains_(index))
                         .unwrap_or(false);
 
@@ -401,7 +405,7 @@ impl<'a> Iterator for RenderableCellsIter<'a> {
                     fg: fg_rgb,
                     bg: bg_rgb,
                     bg_alpha: bg_alpha,
-                })
+                });
             }
 
             self.column = Column(0);
@@ -410,7 +414,6 @@ impl<'a> Iterator for RenderableCellsIter<'a> {
 
         None
     }
-
 }
 
 pub mod mode {
@@ -457,7 +460,7 @@ impl CharsetMapping for StandardCharset {
     fn map(&self, c: char) -> char {
         match *self {
             StandardCharset::Ascii => c,
-            StandardCharset::SpecialCharacterAndLineDrawing =>
+            StandardCharset::SpecialCharacterAndLineDrawing => {
                 match c {
                     '`' => '◆',
                     'a' => '▒',
@@ -490,8 +493,9 @@ impl CharsetMapping for StandardCharset {
                     '|' => '≠',
                     '}' => '£',
                     '~' => '·',
-                    _ => c
-                },
+                    _ => c,
+                }
+            }
         }
     }
 }
@@ -536,10 +540,8 @@ pub struct VisualBell {
 }
 
 fn cubic_bezier(p0: f64, p1: f64, p2: f64, p3: f64, x: f64) -> f64 {
-    (1.0 - x).powi(3) * p0 +
-    3.0 * (1.0 - x).powi(2) * x * p1 +
-    3.0 * (1.0 - x) * x.powi(2) * p2 +
-    x.powi(3) * p3
+    (1.0 - x).powi(3) * p0 + 3.0 * (1.0 - x).powi(2) * x * p1 + 3.0 * (1.0 - x) * x.powi(2) * p2 +
+        x.powi(3) * p3
 }
 
 impl VisualBell {
@@ -573,8 +575,8 @@ impl VisualBell {
                     self.start_time = None;
                 }
                 false
-            },
-            None => true
+            }
+            None => true,
         }
     }
 
@@ -602,10 +604,9 @@ impl VisualBell {
                 }
 
                 let elapsed = instant.duration_since(earlier);
-                let elapsed_f = elapsed.as_secs() as f64 +
-                                elapsed.subsec_nanos() as f64 / 1e9f64;
+                let elapsed_f = elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1e9f64;
                 let duration_f = self.duration.as_secs() as f64 +
-                                 self.duration.subsec_nanos() as f64 / 1e9f64;
+                    self.duration.subsec_nanos() as f64 / 1e9f64;
 
                 // Otherwise, we compute a value `time` from 0.0 to 1.0
                 // inclusive that represents the ratio of `elapsed` time to the
@@ -620,7 +621,9 @@ impl VisualBell {
                     VisualBellAnimation::EaseOut => cubic_bezier(0.25, 0.1, 0.25, 1.0, time),
                     VisualBellAnimation::EaseOutSine => cubic_bezier(0.39, 0.575, 0.565, 1.0, time),
                     VisualBellAnimation::EaseOutQuad => cubic_bezier(0.25, 0.46, 0.45, 0.94, time),
-                    VisualBellAnimation::EaseOutCubic => cubic_bezier(0.215, 0.61, 0.355, 1.0, time),
+                    VisualBellAnimation::EaseOutCubic => {
+                        cubic_bezier(0.215, 0.61, 0.355, 1.0, time)
+                    }
                     VisualBellAnimation::EaseOutQuart => cubic_bezier(0.165, 0.84, 0.44, 1.0, time),
                     VisualBellAnimation::EaseOutQuint => cubic_bezier(0.23, 1.0, 0.32, 1.0, time),
                     VisualBellAnimation::EaseOutExpo => cubic_bezier(0.19, 1.0, 0.22, 1.0, time),
@@ -740,19 +743,21 @@ pub struct SizeInfo {
 impl SizeInfo {
     #[inline]
     pub fn lines(&self) -> Line {
-        Line(((self.height - 2. * self.padding_y) / self.cell_height) as usize)
+        Line(
+            ((self.height - 2. * self.padding_y) / self.cell_height) as usize,
+        )
     }
 
     #[inline]
     pub fn cols(&self) -> Column {
-        Column(((self.width - 2. * self.padding_x) / self.cell_width) as usize)
+        Column(
+            ((self.width - 2. * self.padding_x) / self.cell_width) as usize,
+        )
     }
 
-    fn contains_point(&self, x: usize, y:usize) -> bool {
-        x <= (self.width - self.padding_x) as usize &&
-            x >= self.padding_x as usize &&
-            y <= (self.height - self.padding_y) as usize &&
-            y >= self.padding_y as usize
+    fn contains_point(&self, x: usize, y: usize) -> bool {
+        x <= (self.width - self.padding_x) as usize && x >= self.padding_x as usize &&
+            y <= (self.height - self.padding_y) as usize && y >= self.padding_y as usize
     }
 
     pub fn pixels_to_coords(&self, x: usize, y: usize) -> Option<Point> {
@@ -765,7 +770,7 @@ impl SizeInfo {
 
         Some(Point {
             line: min(line, self.lines() - 1),
-            col: min(col, self.cols() - 1)
+            col: min(col, self.cols() - 1),
         })
     }
 }
@@ -848,7 +853,7 @@ impl Term {
         self.dirty
     }
 
-    pub fn string_from_selection(&self, span: &Span) -> String {
+    pub fn string_from_selection(&self, selection: &Selection) -> String {
         /// Need a generic push() for the Append trait
         trait PushChar {
             fn push_char(&mut self, c: char);
@@ -865,7 +870,7 @@ impl Term {
                 self.push(c);
             }
         }
-        trait Append<T> : PushChar {
+        trait Append<T>: PushChar {
             fn append(&mut self, grid: &Grid<Cell>, line: Line, cols: T) -> Option<Range<Column>>;
         }
 
@@ -876,7 +881,7 @@ impl Term {
                 &mut self,
                 grid: &Grid<Cell>,
                 line: Line,
-                cols: Range<Column>
+                cols: Range<Column>,
             ) -> Option<Range<Column>> {
                 let line = &grid[line];
                 let line_length = line.line_length();
@@ -898,7 +903,12 @@ impl Term {
 
         impl Append<RangeTo<Column>> for String {
             #[inline]
-            fn append(&mut self, grid: &Grid<Cell>, line: Line, cols: RangeTo<Column>) -> Option<Range<Column>> {
+            fn append(
+                &mut self,
+                grid: &Grid<Cell>,
+                line: Line,
+                cols: RangeTo<Column>,
+            ) -> Option<Range<Column>> {
                 self.append(grid, line, Column(0)..cols.end)
             }
         }
@@ -909,11 +919,12 @@ impl Term {
                 &mut self,
                 grid: &Grid<Cell>,
                 line: Line,
-                cols: RangeFrom<Column>
+                cols: RangeFrom<Column>,
             ) -> Option<Range<Column>> {
                 let range = self.append(grid, line, cols.start..Column(usize::max_value() - 1));
-                range.as_ref()
-                    .map(|range| self.maybe_newline(grid, line, range.end));
+                range.as_ref().map(|range| {
+                    self.maybe_newline(grid, line, range.end)
+                });
                 range
             }
         }
@@ -924,47 +935,51 @@ impl Term {
                 &mut self,
                 grid: &Grid<Cell>,
                 line: Line,
-                _: RangeFull
+                _: RangeFull,
             ) -> Option<Range<Column>> {
                 let range = self.append(grid, line, Column(0)..Column(usize::max_value() - 1));
-                range.as_ref()
-                    .map(|range| self.maybe_newline(grid, line, range.end));
+                range.as_ref().map(|range| {
+                    self.maybe_newline(grid, line, range.end)
+                });
                 range
             }
         }
 
         let mut res = String::new();
 
-        let (start, end) = span.to_locations();
-        let line_count = end.line - start.line;
+        if let Some(span) = selection.to_span(self as &Term) {
+            let (start, end) = span.to_locations();
+            let line_count = end.line - start.line;
 
-        match line_count {
-            // Selection within single line
-            Line(0) => {
-                res.append(&self.grid, start.line, start.col..end.col);
-            },
-
-            // Selection ends on line following start
-            Line(1) => {
-                // Starting line
-                res.append(&self.grid, start.line, start.col..);
-
-                // Ending line
-                res.append(&self.grid, end.line, ..end.col);
-            },
-
-            // Multi line selection
-            _ => {
-                // Starting line
-                res.append(&self.grid, start.line, start.col..);
-
-                let middle_range = IndexRange::from((start.line + 1)..(end.line));
-                for line in middle_range {
-                    res.append(&self.grid, line, ..);
+            match line_count {
+                // Selection within single line
+                Line(0) => {
+                    res.append(&self.grid, start.line, start.col..end.col);
                 }
 
-                // Ending line
-                res.append(&self.grid, end.line, ..end.col);
+                // Selection ends on line following start
+                Line(1) => {
+                    // Starting line
+                    res.append(&self.grid, start.line, start.col..);
+
+                    // Ending line
+                    res.append(&self.grid, end.line, ..end.col);
+                }
+
+                // Multi line selection
+                // this needs to be tweaked for block selection
+                _ => {
+                    // Starting line
+                    res.append(&self.grid, start.line, start.col..);
+
+                    let middle_range = IndexRange::from((start.line + 1)..(end.line));
+                    for line in middle_range {
+                        res.append(&self.grid, line, ..);
+                    }
+
+                    // Ending line
+                    res.append(&self.grid, end.line, ..end.col);
+                }
             }
         }
 
@@ -999,8 +1014,9 @@ impl Term {
         config: &'b Config,
         selection: Option<&'b Selection>,
     ) -> RenderableCellsIter {
-        let selection = selection.and_then(|s| s.to_span(self))
-            .map(|span| span.to_range());
+        let selection = selection.and_then(|s| s.to_span(self)).map(|span| {
+            span.to_range()
+        });
 
         RenderableCellsIter::new(
             &self.grid,
@@ -1014,7 +1030,7 @@ impl Term {
     }
 
     /// Resize terminal to new dimensions
-    pub fn resize(&mut self, size : &SizeInfo) {
+    pub fn resize(&mut self, size: &SizeInfo) {
         debug!("Term::resize");
 
         // Bounds check; lots of math assumes width and height are > 0
@@ -1088,8 +1104,14 @@ impl Term {
         if num_lines > old_lines {
             // Make sure bottom of terminal is clear
             let template = self.cursor.template;
-            self.grid.clear_region((self.cursor.point.line + 1).., |c| c.reset(&template));
-            self.alt_grid.clear_region((self.cursor_save_alt.point.line + 1).., |c| c.reset(&template));
+            self.grid.clear_region(
+                (self.cursor.point.line + 1)..,
+                |c| c.reset(&template),
+            );
+            self.alt_grid.clear_region(
+                (self.cursor_save_alt.point.line + 1)..,
+                |c| c.reset(&template),
+            );
         }
 
     }
@@ -1133,8 +1155,14 @@ impl Term {
 
         // Clear `lines` lines at bottom of area
         {
-            let start = max(origin, Line(self.scroll_region.end.0.saturating_sub(lines.0)));
-            self.grid.clear_region(start..self.scroll_region.end, |c| c.reset(&template));
+            let start = max(
+                origin,
+                Line(self.scroll_region.end.0.saturating_sub(lines.0)),
+            );
+            self.grid.clear_region(
+                start..self.scroll_region.end,
+                |c| c.reset(&template),
+            );
         }
 
         // Scroll between origin and bottom
@@ -1212,7 +1240,7 @@ impl ansi::Handler for Term {
             {
                 let location = Point {
                     line: self.cursor.point.line,
-                    col: self.cursor.point.col
+                    col: self.cursor.point.col,
                 };
 
                 let cell = &mut self.grid[&location];
@@ -1237,7 +1265,9 @@ impl ansi::Handler for Term {
                 let num_cols = self.grid.num_cols();
                 {
                     // If in insert mode, first shift cells to the right.
-                    if self.mode.contains(mode::INSERT) && self.cursor.point.col + width < num_cols {
+                    if self.mode.contains(mode::INSERT) &&
+                        self.cursor.point.col + width < num_cols
+                    {
                         let line = self.cursor.point.line; // borrowck
                         let col = self.cursor.point.col;
                         let line = &mut self.grid[line];
@@ -1390,11 +1420,11 @@ impl ansi::Handler for Term {
         match arg {
             5 => {
                 let _ = writer.write_all(b"\x1b[0n");
-            },
+            }
             6 => {
                 let pos = self.cursor.point;
                 let _ = write!(writer, "\x1b[{};{}R", pos.line + 1, pos.col + 1);
-            },
+            }
             _ => debug!("unknown device status query: {}", arg),
         };
     }
@@ -1638,7 +1668,7 @@ impl ansi::Handler for Term {
         let mut template = self.cursor.template;
         template.flags ^= template.flags;
 
-        let col =  self.cursor.point.col;
+        let col = self.cursor.point.col;
 
         match mode {
             ansi::LineClearMode::Right => {
@@ -1646,19 +1676,19 @@ impl ansi::Handler for Term {
                 for cell in &mut row[col..] {
                     cell.reset(&template);
                 }
-            },
+            }
             ansi::LineClearMode::Left => {
                 let row = &mut self.grid[self.cursor.point.line];
                 for cell in &mut row[..(col + 1)] {
                     cell.reset(&template);
                 }
-            },
+            }
             ansi::LineClearMode::All => {
                 let row = &mut self.grid[self.cursor.point.line];
                 for cell in &mut row[..] {
                     cell.reset(&template);
                 }
-            },
+            }
         }
     }
 
@@ -1696,10 +1726,10 @@ impl ansi::Handler for Term {
                         }
                     }
                 }
-            },
+            }
             ansi::ClearMode::All => {
                 self.grid.clear(|c| c.reset(&template));
-            },
+            }
             ansi::ClearMode::Above => {
                 // If clearing more than one line
                 if self.cursor.point.line > Line(1) {
@@ -1715,9 +1745,9 @@ impl ansi::Handler for Term {
                 for cell in &mut self.grid[self.cursor.point.line][..end] {
                     cell.reset(&template);
                 }
-            },
+            }
             // If scrollback is implemented, this should clear it
-            ansi::ClearMode::Saved => return
+            ansi::ClearMode::Saved => return,
         }
     }
 
@@ -1728,7 +1758,7 @@ impl ansi::Handler for Term {
             ansi::TabulationClearMode::Current => {
                 let column = self.cursor.point.col;
                 self.tabs[column.0] = false;
-            },
+            }
             ansi::TabulationClearMode::All => {
                 let len = self.tabs.len();
                 // Safe since false boolean is null, each item occupies only 1
@@ -1767,7 +1797,7 @@ impl ansi::Handler for Term {
                 self.cursor.template.fg = Color::Named(NamedColor::Foreground);
                 self.cursor.template.bg = Color::Named(NamedColor::Background);
                 self.cursor.template.flags = cell::Flags::empty();
-            },
+            }
             Attr::Reverse => self.cursor.template.flags.insert(cell::INVERSE),
             Attr::CancelReverse => self.cursor.template.flags.remove(cell::INVERSE),
             Attr::Bold => self.cursor.template.flags.insert(cell::BOLD),
@@ -1794,7 +1824,7 @@ impl ansi::Handler for Term {
                     self.swap_alt();
                 }
                 self.save_cursor_position();
-            },
+            }
             ansi::Mode::ShowCursor => self.mode.insert(mode::SHOW_CURSOR),
             ansi::Mode::CursorKeys => self.mode.insert(mode::APP_CURSOR),
             ansi::Mode::ReportMouseClicks => self.mode.insert(mode::MOUSE_REPORT_CLICK),
@@ -1814,7 +1844,7 @@ impl ansi::Handler for Term {
     }
 
     #[inline]
-    fn unset_mode(&mut self,mode: ansi::Mode) {
+    fn unset_mode(&mut self, mode: ansi::Mode) {
         trace!("unset_mode: {:?}", mode);
         match mode {
             ansi::Mode::SwapScreenAndSetRestoreCursor => {
@@ -1823,7 +1853,7 @@ impl ansi::Handler for Term {
                     self.swap_alt();
                 }
                 self.restore_cursor_position();
-            },
+            }
             ansi::Mode::ShowCursor => self.mode.remove(mode::SHOW_CURSOR),
             ansi::Mode::CursorKeys => self.mode.remove(mode::APP_CURSOR),
             ansi::Mode::ReportMouseClicks => self.mode.remove(mode::MOUSE_REPORT_CLICK),
@@ -1922,18 +1952,45 @@ mod tests {
         mem::swap(&mut term.semantic_escape_chars, &mut escape_chars);
 
         {
-            let selection = Selection::semantic(Point { line: Line(0), col: Column(1) }, &term);
-            assert_eq!(term.string_from_selection(&selection.to_span(&term).unwrap()), "aa");
+            let selection = Selection::semantic(
+                Point {
+                    line: Line(0),
+                    col: Column(1),
+                },
+                &term,
+            );
+            assert_eq!(
+                term.string_from_selection(&selection.to_span(&term).unwrap()),
+                "aa"
+            );
         }
 
         {
-            let selection = Selection::semantic(Point { line: Line(0), col: Column(4) }, &term);
-            assert_eq!(term.string_from_selection(&selection.to_span(&term).unwrap()), "aaa");
+            let selection = Selection::semantic(
+                Point {
+                    line: Line(0),
+                    col: Column(4),
+                },
+                &term,
+            );
+            assert_eq!(
+                term.string_from_selection(&selection.to_span(&term).unwrap()),
+                "aaa"
+            );
         }
 
         {
-            let selection = Selection::semantic(Point { line: Line(1), col: Column(1) }, &term);
-            assert_eq!(term.string_from_selection(&selection.to_span(&term).unwrap()), "aaa");
+            let selection = Selection::semantic(
+                Point {
+                    line: Line(1),
+                    col: Column(1),
+                },
+                &term,
+            );
+            assert_eq!(
+                term.string_from_selection(&selection.to_span(&term).unwrap()),
+                "aaa"
+            );
         }
     }
 
@@ -1958,10 +2015,13 @@ mod tests {
 
         mem::swap(&mut term.grid, &mut grid);
 
-        let selection = Selection::lines(Point { line: Line(0), col: Column(3) });
+        let selection = Selection::lines(Point {
+            line: Line(0),
+            col: Column(3),
+        });
         match selection.to_span(&term) {
             Some(span) => assert_eq!(term.string_from_selection(&span), "\"aa\"a"),
-            _ => ()
+            _ => (),
         }
     }
 
@@ -1975,8 +2035,7 @@ mod tests {
 
         let grid = Grid::new(Line(24), Column(80), &template);
         let serialized = serde_json::to_string(&grid).expect("ser");
-        let deserialized = serde_json::from_str::<Grid<Cell>>(&serialized)
-                                      .expect("de");
+        let deserialized = serde_json::from_str::<Grid<Cell>>(&serialized).expect("de");
 
         assert_eq!(deserialized, grid);
     }
@@ -1993,8 +2052,10 @@ mod tests {
         };
         let mut term = Term::new(&Default::default(), size);
         let cursor = Point::new(Line(0), Column(0));
-        term.configure_charset(CharsetIndex::G0,
-                               StandardCharset::SpecialCharacterAndLineDrawing);
+        term.configure_charset(
+            CharsetIndex::G0,
+            StandardCharset::SpecialCharacterAndLineDrawing,
+        );
         term.input('a');
 
         assert_eq!(term.grid()[&cursor].c, '▒');
@@ -2018,11 +2079,14 @@ mod benches {
     use super::cell::Cell;
 
     fn read_string<P>(path: P) -> String
-        where P: AsRef<Path>
+    where
+        P: AsRef<Path>,
     {
         let mut res = String::new();
-        File::open(path.as_ref()).unwrap()
-            .read_to_string(&mut res).unwrap();
+        File::open(path.as_ref())
+            .unwrap()
+            .read_to_string(&mut res)
+            .unwrap();
 
         res
     }
@@ -2039,12 +2103,14 @@ mod benches {
     #[bench]
     fn render_iter(b: &mut test::Bencher) {
         // Need some realistic grid state; using one of the ref files.
-        let serialized_grid = read_string(
-            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/ref/vim_large_window_scroll/grid.json")
-        );
-        let serialized_size = read_string(
-            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/ref/vim_large_window_scroll/size.json")
-        );
+        let serialized_grid = read_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/ref/vim_large_window_scroll/grid.json"
+        ));
+        let serialized_size = read_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/ref/vim_large_window_scroll/size.json"
+        ));
 
         let mut grid: Grid<Cell> = json::from_str(&serialized_grid).unwrap();
         let size: SizeInfo = json::from_str(&serialized_size).unwrap();

@@ -43,10 +43,9 @@ impl Default for Cell {
         Cell::new(
             ' ',
             Color::Named(NamedColor::Foreground),
-            Color::Named(NamedColor::Background)
+            Color::Named(NamedColor::Background),
         )
     }
-
 }
 
 /// Get the length of occupied cells in a line
@@ -101,8 +100,7 @@ impl Cell {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.c == ' ' &&
-            self.bg == Color::Named(NamedColor::Background) &&
+        self.c == ' ' && self.bg == Color::Named(NamedColor::Background) &&
             !self.flags.intersects(INVERSE | UNDERLINE)
     }
 

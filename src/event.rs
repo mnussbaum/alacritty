@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use std::fs::File;
 use std::io::Write;
 use std::sync::mpsc;
-use std::time::{Instant};
+use std::time::Instant;
 
 use serde_json as json;
 use parking_lot::MutexGuard;
@@ -57,17 +57,15 @@ impl<'a, N: Notify + 'a> input::ActionContext for ActionContext<'a, N> {
 
     fn copy_selection(&self, buffer: ::copypasta::Buffer) {
         if let &mut Some(ref selection) = self.selection {
-            selection.to_span(self.terminal as &Term)
-                .map(|span| {
-                    let buf = self.terminal.string_from_selection(&span);
-                    if !buf.is_empty() {
-                        Clipboard::new()
-                            .and_then(|mut clipboard| clipboard.store(buf, buffer))
-                            .unwrap_or_else(|err| {
-                                warn!("Error storing selection to clipboard. {}", Red(err));
-                            });
-                    }
-                });
+            // this is the final usage of the span/selection
+            let buf = self.terminal.string_from_selection(&selection);
+            if !buf.is_empty() {
+                Clipboard::new()
+                    .and_then(|mut clipboard| clipboard.store(buf, buffer))
+                    .unwrap_or_else(|err| {
+                        warn!("Error storing selection to clipboard. {}", Red(err));
+                    });
+            }
         }
     }
 
@@ -104,7 +102,10 @@ impl<'a, N: Notify + 'a> input::ActionContext for ActionContext<'a, N> {
     }
 
     fn mouse_coords(&self) -> Option<Point> {
-        self.terminal.pixels_to_coords(self.mouse.x as usize, self.mouse.y as usize)
+        self.terminal.pixels_to_coords(
+            self.mouse.x as usize,
+            self.mouse.y as usize,
+        )
     }
 
     fn change_font_size(&mut self, delta: i8) {
@@ -264,11 +265,11 @@ impl<N: Notify> Processor<N> {
                             // dump grid state
                             let grid = processor.ctx.terminal.grid();
 
-                            let serialized_grid = json::to_string(&grid)
-                                .expect("serialize grid");
+                            let serialized_grid = json::to_string(&grid).expect("serialize grid");
 
-                            let serialized_size = json::to_string(processor.ctx.terminal.size_info())
-                                .expect("serialize size");
+                            let serialized_size = json::to_string(
+                                processor.ctx.terminal.size_info(),
+                            ).expect("serialize size");
 
                             File::create("./grid.json")
                                 .and_then(|mut f| f.write_all(serialized_grid.as_bytes()))
@@ -281,27 +282,32 @@ impl<N: Notify> Processor<N> {
 
                         // FIXME should do a more graceful shutdown
                         ::std::process::exit(0);
-                    },
+                    }
                     Resized(w, h) => {
                         resize_tx.send((w, h)).expect("send new size");
                         processor.ctx.terminal.dirty = true;
-                    },
+                    }
                     KeyboardInput { input, .. } => {
-                        let glutin::KeyboardInput { state, virtual_keycode, modifiers, .. } = input;
+                        let glutin::KeyboardInput {
+                            state,
+                            virtual_keycode,
+                            modifiers,
+                            ..
+                        } = input;
                         processor.process_key(state, virtual_keycode, &modifiers);
                         if state == ElementState::Pressed {
                             // Hide cursor while typing
                             *hide_cursor = true;
                         }
-                    },
+                    }
                     ReceivedCharacter(c) => {
                         processor.received_char(c);
-                    },
+                    }
                     MouseInput { state, button, .. } => {
                         *hide_cursor = false;
                         processor.mouse_input(state, button);
                         processor.ctx.terminal.dirty = true;
-                    },
+                    }
                     MouseMoved { position: (x, y), .. } => {
                         let x = x as i32;
                         let y = y as i32;
@@ -314,14 +320,14 @@ impl<N: Notify> Processor<N> {
                         if !processor.ctx.selection.is_none() {
                             processor.ctx.terminal.dirty = true;
                         }
-                    },
+                    }
                     MouseWheel { delta, phase, .. } => {
                         *hide_cursor = false;
                         processor.on_mouse_wheel(delta, phase);
-                    },
+                    }
                     Refresh => {
                         processor.ctx.terminal.dirty = true;
-                    },
+                    }
                     Focused(is_focused) => {
                         *window_is_focused = is_focused;
 
@@ -336,7 +342,7 @@ impl<N: Notify> Processor<N> {
                     }
                     _ => (),
                 }
-            },
+            }
             Event::Awakened => {
                 processor.ctx.terminal.dirty = true;
             }
@@ -348,7 +354,7 @@ impl<N: Notify> Processor<N> {
     pub fn process_events<'a>(
         &mut self,
         term: &'a FairMutex<Term>,
-        window: &mut Window
+        window: &mut Window,
     ) -> MutexGuard<'a, Term> {
         // Terminal is lazily initialized the first time an event is returned
         // from the blocking WaitEventsIterator. Otherwise, the pty reader would

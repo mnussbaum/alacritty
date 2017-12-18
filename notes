@@ -1,0 +1,5 @@
+* Selections implement to_span to return contiguous blocks of chars
+* The span is passed to string_from_selection, which actually takes
+  a span 
+* string_from_selection iterates through the terminal grid and grabs
+  chars line by line based on the star and end points of the span
